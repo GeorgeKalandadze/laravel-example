@@ -14,7 +14,11 @@ class PostController extends Controller
     public function index(): JsonResponse
     {
         $posts = Post::all();
-        return response()->json($posts);
+
+        return response()->json([
+            'success' => true,
+            'data' => $posts
+        ], 200);
     }
 
     /**
@@ -22,14 +26,26 @@ class PostController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'body' => 'required|string',
         ]);
 
-        $post = Post::create($request->all());
+        try {
+            $post = Post::create($validated);
 
-        return response()->json($post, 201);
+            return response()->json([
+                'success' => true,
+                'data' => $post,
+                'message' => 'Post created successfully.'
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Post creation failed.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -37,8 +53,20 @@ class PostController extends Controller
      */
     public function show(string $id): JsonResponse
     {
-        $post = Post::findOrFail($id);
-        return response()->json($post);
+        try {
+            $post = Post::findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $post
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Post not found.',
+                'error' => $e->getMessage()
+            ], 404);
+        }
     }
 
     /**
@@ -46,15 +74,27 @@ class PostController extends Controller
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'body' => 'required|string',
         ]);
 
-        $post = Post::findOrFail($id);
-        $post->update($request->all());
+        try {
+            $post = Post::findOrFail($id);
+            $post->update($validated);
 
-        return response()->json($post);
+            return response()->json([
+                'success' => true,
+                'data' => $post,
+                'message' => 'Post updated successfully.'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Post update failed.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -62,9 +102,20 @@ class PostController extends Controller
      */
     public function destroy(string $id): JsonResponse
     {
-        $post = Post::findOrFail($id);
-        $post->delete();
+        try {
+            $post = Post::findOrFail($id);
+            $post->delete();
 
-        return response()->json(null, 204);
+            return response()->json([
+                'success' => true,
+                'message' => 'Post deleted successfully.'
+            ], 204);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Post deletion failed.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
